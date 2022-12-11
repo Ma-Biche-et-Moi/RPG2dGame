@@ -10,6 +10,7 @@ import javax.swing.JPanel;
 import entity.Player;
 import rayCasting.Boundary;
 import rayCasting.Particle;
+import rayShadowing.Edge;
 import tile.TileManager;
 
 public class GamePanel extends JPanel implements Runnable {
@@ -136,6 +137,12 @@ public class GamePanel extends JPanel implements Runnable {
 				wall.show(g2, this);
 			}
  		}
+		
+		for (Edge edge : tileM.edge) {
+			if (edge != null) {
+				edge.draw(g2);
+			}
+		}
 		
 		player.draw(g2);
 		

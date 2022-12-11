@@ -16,8 +16,9 @@ import main.UtilityTool;
 
 import processing.core.*;
 import rayCasting.Boundary;
-import rayCasting.Particle;
 import rayCasting.Ray;
+import rayShadowing.Cell;
+import rayShadowing.Edge;
 
 public class TileManager extends PApplet {
 	
@@ -29,6 +30,9 @@ public class TileManager extends PApplet {
 	int lastDigit = 0;
 	int waterStartI = 0;
 	
+	public Cell[][] cells;
+	public Edge[] edge = new Edge[500];
+	
 	public TileManager(GamePanel gp) {
 		
 		this.gp = gp;
@@ -36,10 +40,112 @@ public class TileManager extends PApplet {
 		tile = new Tile[99];
 		mapTileNum = new int[gp.maxWorldCol][gp.maxWorldRow];
 		
+		cells = new Cell[gp.maxWorldCol][gp.maxWorldRow];
+		
 		getTileImage();
 		setMap();
+		setCells();
 	}
 	
+	public void setCells() {
+		
+		int edgeId = 0;
+		
+		for (int i = 0; i < gp.maxWorldCol; i++) {
+			for (int j = 0; j < gp.maxWorldRow; j++) {
+				
+				if (tile[mapTileNum[i][j]].opaque == true) {
+					cells[i][j] = new Cell(true);
+				}
+				else {
+					cells[i][j] = new Cell(false);
+				}
+				
+			}
+		}
+		
+		for (int i = 0; i < gp.maxWorldCol; i++) {
+			for (int j = 0; j < gp.maxWorldRow; j++) {
+				
+				if (cells[i][j].exist) {
+					
+					// WEST
+					if (i > 0) { if (cells[i-1][j].exist == false) {
+						if (j > 0) { if (cells[i][j-1].edgeExist[0] == false) {
+							edge[edgeId] = new Edge(new Point(i * gp.tileSize, j * gp.tileSize), new Point(i * gp.tileSize, j * gp.tileSize + gp.tileSize), gp);
+							cells[i][j].edgeId[0] = edgeId;
+							edgeId++;
+						} else {
+							edge[cells[i][j-1].edgeId[0]].b = new Point(i * gp.tileSize, j * gp.tileSize + gp.tileSize);
+							cells[i][j].edgeId[0] = cells[i][j-1].edgeId[0];
+						}}
+						else {
+							edge[edgeId] = new Edge(new Point(i * gp.tileSize, j * gp.tileSize), new Point(i * gp.tileSize, j * gp.tileSize + gp.tileSize), gp);
+							cells[i][j].edgeId[0] = edgeId;
+							edgeId++;
+						}
+						cells[i][j].edgeExist[0] = true;
+					}}
+					
+					// EAST
+					if (i < gp.maxWorldCol-1) { if (cells[i+1][j].exist == false) {
+						if (j > 0) { if (cells[i][j-1].edgeExist[1] == false) {
+							edge[edgeId] = new Edge(new Point(i * gp.tileSize + gp.tileSize, j * gp.tileSize), new Point(i * gp.tileSize + gp.tileSize, j * gp.tileSize + gp.tileSize), gp);
+							cells[i][j].edgeId[1] = edgeId;
+							edgeId++;
+						}
+						else {
+							edge[cells[i][j-1].edgeId[1]].b = new Point(i * gp.tileSize + gp.tileSize, j * gp.tileSize + gp.tileSize);
+							cells[i][j].edgeId[1] = cells[i][j-1].edgeId[1];
+						}}
+						else {
+							edge[edgeId] = new Edge(new Point(i * gp.tileSize + gp.tileSize, j * gp.tileSize), new Point(i * gp.tileSize + gp.tileSize, j * gp.tileSize + gp.tileSize), gp);
+							cells[i][j].edgeId[1] = edgeId;
+							edgeId++;
+						}
+						cells[i][j].edgeExist[1] = true;
+					}}
+					
+					// NORTH
+					if (j > 0) { if (cells[i][j-1].exist == false) {
+						if (i > 0) { if (cells[i-1][j].edgeExist[2] == false) {
+							edge[edgeId] = new Edge(new Point(i * gp.tileSize, j * gp.tileSize), new Point(i * gp.tileSize + gp.tileSize, j * gp.tileSize), gp);
+							cells[i][j].edgeId[2] = edgeId;
+							edgeId++;
+						} else {
+							edge[cells[i-1][j].edgeId[2]].b = new Point(i * gp.tileSize + gp.tileSize, j * gp.tileSize);
+							cells[i][j].edgeId[2] = cells[i-1][j].edgeId[2];
+						}}
+						else {
+							edge[edgeId] = new Edge(new Point(i * gp.tileSize, j * gp.tileSize), new Point(i * gp.tileSize + gp.tileSize, j * gp.tileSize), gp);
+							cells[i][j].edgeId[2] = edgeId;
+							edgeId++;
+						}
+						cells[i][j].edgeExist[2] = true;
+					}}
+					
+					// SOUTH
+					if (j < gp.maxWorldRow-1) { if (cells[i][j+1].exist == false) {
+						if (i > 0) { if (cells[i-1][j].edgeExist[3] == false) {
+							edge[edgeId] = new Edge(new Point(i * gp.tileSize, j * gp.tileSize + gp.tileSize), new Point(i * gp.tileSize + gp.tileSize, j * gp.tileSize + gp.tileSize), gp);
+							cells[i][j].edgeId[3] = edgeId;
+							edgeId++;
+						} else {
+							edge[cells[i-1][j].edgeId[3]].b = new Point(i * gp.tileSize + gp.tileSize, j * gp.tileSize + gp.tileSize);
+							cells[i][j].edgeId[3] = cells[i-1][j].edgeId[3];
+						}}
+						else {
+							edge[edgeId] = new Edge(new Point(i * gp.tileSize, j * gp.tileSize + gp.tileSize), new Point(i * gp.tileSize + gp.tileSize, j * gp.tileSize + gp.tileSize), gp);
+							cells[i][j].edgeId[3] = edgeId;
+							edgeId++;
+						}
+						cells[i][j].edgeExist[3] = true;
+					}}
+				}
+			}
+		}
+	}
+
 	public void setMap() {
 		
 		int[][] tempTileNum = new int[gp.maxWorldCol][gp.maxWorldRow];
